@@ -36,6 +36,8 @@ def role_for_email(email: str) -> str:
     normalized = normalize_email(email)
     if normalized.endswith("@bnbu.edu.cn"):
         return "teacher"
+    if normalized.endswith("@mail.bnbu.edu.cn"):
+        return "student"
     raise AuthError(
         400,
         "unknown_email_domain",

@@ -139,16 +139,69 @@ def build_essay_html_prompt(
     search: dict[str, Any],
 ) -> tuple[str, str]:
     system_prompt = (
-        "You are an expert teaching assistant writing complete academic essay and "
-        "report deliverables as self-contained HTML documents. Return only the "
+        "You are an expert teaching assistant and cloud engineer writing complete "
+        "academic essay and technical report deliverables as self-contained HTML "
+        "documents. You write for a university business-analytics course: explain "
+        "technical ideas precisely but in plain language, ground every claim in "
+        "the student's own evidence, and never invent results. Return only the "
         "requested HTML source, with no surrounding explanation."
+    )
+    report_instruction = (
+        "When the task is a technical or deployment report (for example the "
+        "BA3073 assignment 'From AI Agent to Cloud Service'), follow these rules.\n"
+        "1. Length and front matter: at most 20 A4 pages. Start with a title, the "
+        "student's name and ID if given, course code, date, and a 150-word "
+        "executive summary that states the final HTTPS URL and whether each task "
+        "succeeded.\n"
+        "2. Structure: use numbered sections in this order: (1) Objective and "
+        "system architecture; (2) Task 1 local Docker deployment; (3) Revised "
+        "report-generation instructions; (4) Task 2 Aliyun ECS deployment via "
+        "ACR; (5) Task 3 domain, Nginx reverse proxy, HTTPS and access control; "
+        "(6) Security and cost analysis; (7) Problems encountered and fixes; "
+        "(8) Improvements and conclusion; then References and an Appendix of "
+        "commands and log excerpts.\n"
+        "3. Technical explanations: explain how the browser, Nginx, the FastAPI "
+        "backend, SQLite, the workspace folder, the Qwen-compatible model API and "
+        "Docker relate to each other. Draw the request path as an inline SVG "
+        "diagram (browser -> DNS -> Nginx:443 -> 127.0.0.1:14242 container -> "
+        "model API). Explain why each step exists: image architecture "
+        "(arm64 vs amd64), registry push and pull, volume persistence, port "
+        "mapping, security-group rules, TLS certificates, and Basic Auth.\n"
+        "4. Evidence: for each task, give the exact commands run, the expected "
+        "result, and the observed result. Quote short log excerpts from "
+        "local-ui-check.txt and ecs-docker-check.txt (HTTP status, PASS/FAIL, "
+        "container status, port mapping) in <pre> blocks. Where the student "
+        "provides screenshots, insert a numbered figure placeholder with a "
+        "one-sentence caption stating what the screenshot verifies, for example "
+        "'Figure 3: ECS UI reached at http://<ip>:14242/ui/ with the address bar "
+        "visible.' If evidence is missing, write [EVIDENCE NEEDED: ...] instead "
+        "of inventing it.\n"
+        "5. Prompt revision section: summarise the original instruction, the "
+        "revised instruction, why each change was made, and how the generated "
+        "report improved.\n"
+        "6. Security and cost: discuss secret handling (API keys never in code, "
+        "report or Git), least-privilege security groups, closing public port "
+        "14242 after the reverse proxy works, HTTPS, the extra access-control "
+        "layer separate from the app's BNBU login, data backups, and the "
+        "monthly cost drivers (ECS instance, bandwidth, domain, model tokens).\n"
+        "7. Improvements: give concrete, prioritised next steps such as "
+        "automatic certificate renewal checks, CI/CD image builds, monitoring and "
+        "log rotation, rate limiting, SSO or identity-aware proxies, and "
+        "separating SQLite into a managed database.\n"
+        "8. Safety: never print API keys, passwords, tokens, private keys or "
+        "Basic Auth hashes; replace them with <REDACTED>.\n"
+        "9. Style: use short paragraphs, tables for comparisons (for example "
+        "local vs ECS vs domain deployment), and consistent terminology. Write "
+        "in the language of the assignment task unless the options say otherwise."
     )
     output_instruction = (
         "Return one complete self-contained HTML document. It must start with "
         "<!doctype html> and include <html>, <head>, and <body>. Include all CSS "
         "inside a <style> element: use a readable serif academic print layout, "
         "clear heading hierarchy, careful paragraph spacing, and CSS "
-        "@page { size: A4; margin: 20mm; }. Do not use external stylesheet links, "
+        "@page { size: A4; margin: 20mm; }. Add page-break-inside: avoid to "
+        "figures, tables and <pre> blocks, and wrap long commands so they do not "
+        "overflow the page. Do not use external stylesheet links, "
         "remote images, or remote HTTP(S) assets. If mathematical notation is "
         "needed, include inline KaTeX-compatible markup and any needed minimal "
         "KaTeX styling inline in the document; do not fetch KaTeX from a CDN at "
@@ -162,6 +215,7 @@ def build_essay_html_prompt(
             "[Prepared Context]\n" + context_bundle.strip(),
             "[Search Citations]\n" + format_citations(search),
             "[Options]\n" + json.dumps(options, sort_keys=True),
+            "[Report Guidance]\n" + report_instruction,
             "[Output Contract]\n" + output_instruction,
         ]
     )

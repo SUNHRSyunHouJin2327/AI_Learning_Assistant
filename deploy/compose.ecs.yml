@@ -1,0 +1,29 @@
+# ECS compose file. Copy to the ECS server as ~/ai-agent/compose.yml.
+# Put AILA_IMAGE in ~/ai-agent/.env (never commit it).
+services:
+  backend:
+    image: ${AILA_IMAGE:?set AILA_IMAGE in .env}
+    restart: unless-stopped
+    ports:
+      # Task 2 direct test: "14242:14242"
+      # Task 3 after Nginx works: change to "127.0.0.1:14242:14242"
+      - "14242:14242"
+    environment:
+      APP_SQLITE_PATH: /app/data/app.sqlite
+      WORKSPACE_ROOT: /app/workspace
+      MODEL_PROVIDER: openai_compatible
+      MODEL_BASE_URL: https://dashscope.aliyuncs.com/compatible-mode/v1
+      MODEL_NAME: qwen3.6-flash
+      MODEL_KEY_ENCRYPTION_FILE: /app/data/model-key-encryption.key
+      MODEL_SECRET_FILE: /app/data/model-secrets.env
+      MODEL_CONTEXT_WINDOW: "1000000"
+      MODEL_SUPPORTS_STREAMING: "true"
+    volumes:
+      - ./data:/app/data
+      - ./workspace:/app/workspace
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:14242/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 10s

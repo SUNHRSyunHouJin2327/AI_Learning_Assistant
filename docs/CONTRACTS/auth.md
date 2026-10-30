@@ -22,6 +22,10 @@ Unknown domains must be rejected.
 
 ### `POST /api/auth/register`
 
+Accepted email domains: `@bnbu.edu.cn` registers with role `teacher`;
+`@mail.bnbu.edu.cn` registers with role `student`. Other domains return
+`400 unknown_email_domain`.
+
 Request:
 
 ```json

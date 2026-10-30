@@ -49,6 +49,23 @@ def test_teacher_can_register_login_and_read_me(auth_client):
     assert me.json() == {"email": "professor@bnbu.edu.cn", "role": "teacher"}
 
 
+def test_student_mail_domain_registers_as_student(auth_client):
+    client, _repo = auth_client
+    payload = {
+        "email": "Student@Mail.BNBU.edu.cn",
+        "password": "correct-horse",
+        "confirm_password": "correct-horse",
+    }
+
+    register = client.post("/api/auth/register", json=payload)
+    assert register.status_code == 200
+    assert register.json() == {
+        "status": "success",
+        "email": "student@mail.bnbu.edu.cn",
+        "role": "student",
+    }
+
+
 def test_unknown_domain_is_rejected(auth_client):
     client, _repo = auth_client
 
